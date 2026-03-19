@@ -1,7 +1,7 @@
 # pyads-standalone
 
-`pyads-standalone` serve per usare `pyads` su Windows anche se TwinCAT non e
-installato sul PC client.
+`pyads-standalone` serve per usare `pyads` su Windows senza installare
+TwinCAT.
 
 In pratica:
 
@@ -9,56 +9,41 @@ In pratica:
 - continui a scrivere `import pyads`
 - su Windows viene usata una `TcAdsDll.dll` inclusa nel wheel
 
-Se TwinCAT e gia installato e `TWINCAT3DIR` e presente, il pacchetto non forza
-la DLL bundleata e lascia lavorare la DLL di TwinCAT.
+## A chi serve
 
-## Risposta breve alla domanda "e tutto standalone?"
+Questo pacchetto ti serve se:
 
-Per chi usa il pacchetto:
-
-- si, questo deve diventare completamente standalone
-- l utente finale deve solo fare `pip install ...`
-- non deve installare TwinCAT
-- non deve installare Ninja
-- non deve installare Meson
-- non deve installare Visual Studio per usare il wheel gia pronto
-
-Per chi crea il wheel:
-
-- Python puo scaricare da solo i tool Python di build
-- ma la DLL Windows resta una libreria C/C++, quindi da qualche parte serve
-  comunque un compilatore Windows
-
-Quindi il modello giusto e questo:
-
-- gli utenti finali installano un wheel gia compilato
-- la compilazione viene fatta una volta sola in CI su Windows
-- poi tutti gli utenti usano solo il wheel, senza tool extra
-
-## Quando ti serve
-
-Usa questo pacchetto se:
-
-- hai un PC Windows 64 bit
-- vuoi usare `pyads`
+- usi Windows 64 bit
+- vuoi leggere o scrivere variabili ADS da Python
 - non vuoi installare TwinCAT sul PC client
+
+## Cosa ti serve davvero
+
+Per usare questo pacchetto ti servono solo:
+
+- Windows 64 bit
+- Python
+- accesso di rete al PLC o al dispositivo ADS
+- IP del PLC
+- AMS Net ID del PLC
+
+Non ti servono:
+
+- TwinCAT sul PC client
+- Ninja
+- Meson
+- Visual Studio
 
 ## Cosa non cambia
 
-Questo pacchetto toglie la dipendenza da TwinCAT sul PC client, ma non elimina
-le regole normali di ADS.
+Questo pacchetto toglie TwinCAT dal PC client, ma ADS continua a funzionare
+come sempre.
 
-Restano comunque necessari:
+Quindi restano comunque necessari:
 
-- un PLC o target Beckhoff/TwinCAT raggiungibile in rete
-- un AMS Net ID del target
-- una route AMS corretta tra il tuo PC e il target
-
-## Requisiti per chi lo usa
-
-- Windows 64 bit
-- Python compatibile con `pyads` 3.5.x
-- accesso di rete al PLC o al target ADS
+- un PLC o un target ADS raggiungibile
+- una route AMS corretta
+- un AMS Net ID locale valido sul tuo PC
 
 ## Installazione
 
@@ -68,20 +53,28 @@ Se il pacchetto e pubblicato su PyPI:
 pip install pyads-standalone
 ```
 
-Se hai gia il wheel locale:
+Se hai un wheel gia pronto:
 
 ```bash
 pip install pyads_standalone-0.1.0-py3-none-win_amd64.whl
 ```
 
-Questo pacchetto installa anche `pyads` come dipendenza.
+Dopo l installazione non devi fare altro.
 
-Per l utente finale, qui finisce tutto: non servono altri tool.
+## Come si usa
 
-## Uso veloce
+Il codice Python resta quello normale di `pyads`.
 
-Se hai gia una route AMS funzionante, il codice Python resta quello normale di
-`pyads`.
+Import:
+
+```python
+import pyads
+```
+
+## Caso 1: hai gia una route AMS funzionante
+
+Se il PLC ha gia una route valida verso il tuo PC, puoi usare direttamente
+`pyads` come faresti su Linux.
 
 Esempio:
 
@@ -100,17 +93,17 @@ print(value)
 plc.close()
 ```
 
-## Primo uso senza TwinCAT sul PC
+## Caso 2: non hai TwinCAT e devi partire da zero
 
-Se sul PC client non hai TwinCAT, il caso piu sicuro e questo:
+Se sul PC non hai TwinCAT, il flusso tipico e questo:
 
-1. scegli un AMS Net ID locale per il tuo PC, per esempio `192.168.0.50.1.1`
+1. scegli un AMS Net ID locale per il tuo PC
 2. apri la porta ADS
-3. imposti l AMS Net ID locale
-4. aggiungi la route locale verso il PLC
-5. ti connetti al PLC
+3. imposti il tuo AMS Net ID locale
+4. aggiungi la route verso il PLC
+5. apri la connessione
 
-Esempio:
+Esempio completo:
 
 ```python
 import pyads
@@ -132,16 +125,13 @@ plc.close()
 pyads.close_port()
 ```
 
-## Route AMS: cosa devi fare davvero
+## Se il PLC non conosce ancora il tuo PC
 
-Per comunicare via ADS serve che il target accetti il tuo client.
+In questo caso devi creare la route anche sul PLC.
 
-Quindi devi avere almeno una di queste due situazioni:
+Puoi farlo via codice con `pyads.add_route_to_plc(...)`.
 
-- la route dal target verso il tuo PC e gia configurata
-- la crei tu via codice con `pyads.add_route_to_plc(...)`
-
-Esempio di creazione route sul PLC:
+Esempio:
 
 ```python
 import pyads
@@ -159,15 +149,51 @@ ok = pyads.add_route_to_plc(
 print(ok)
 ```
 
-Se non esiste una route valida, il pacchetto e installato correttamente ma la
-connessione ADS fallira comunque.
+Se questa route non esiste, il pacchetto e installato bene ma la connessione
+ADS non funzionera.
+
+## Ordine giusto per il primo test
+
+Se vuoi provare la libreria da zero, fai cosi:
+
+1. installa il pacchetto
+2. verifica IP e AMS Net ID del PLC
+3. scegli un AMS Net ID locale per il tuo PC
+4. esegui `pyads.open_port()`
+5. esegui `pyads.set_local_address(...)`
+6. esegui `pyads.add_route(...)` oppure `pyads.add_route_to_plc(...)`
+7. apri la connessione con `pyads.Connection(...)`
+8. prova una `read_by_name(...)`
+
+## Esempio minimo pronto da copiare
+
+```python
+import pyads
+
+LOCAL_AMS = "192.168.0.50.1.1"
+PLC_AMS = "192.168.0.10.1.1"
+PLC_IP = "192.168.0.10"
+
+pyads.open_port()
+pyads.set_local_address(LOCAL_AMS)
+pyads.add_route(PLC_AMS, PLC_IP)
+
+plc = pyads.Connection(PLC_AMS, pyads.PORT_TC3PLC1, PLC_IP)
+plc.open()
+
+try:
+    print(plc.read_by_name("GVL.my_value"))
+finally:
+    plc.close()
+    pyads.close_port()
+```
 
 ## Se TwinCAT e gia installato
 
-Non devi fare nulla di speciale.
+Puoi installare comunque `pyads-standalone`.
 
-Puoi installare comunque `pyads-standalone`, ma se `TWINCAT3DIR` e presente il
-package non sostituisce la DLL di TwinCAT e lascia il comportamento standard.
+Se sul PC e presente `TWINCAT3DIR`, il pacchetto non forza la DLL bundleata e
+lascia il comportamento standard di TwinCAT.
 
 ## Errori comuni
 
@@ -175,146 +201,67 @@ package non sostituisce la DLL di TwinCAT e lascia il comportamento standard.
 
 Controlla che:
 
-- il pacchetto sia installato nello stesso ambiente Python da cui esegui lo script
-- tu stia usando Windows 64 bit
-- l installazione non sia stata fatta in modo parziale
+- stai usando lo stesso ambiente Python in cui hai installato il pacchetto
+- stai usando Windows 64 bit
+- il wheel e stato installato correttamente
 
-### Timeout o errore ADS quando apri la connessione
+### Timeout o errore ADS
 
-Di solito significa che:
+Di solito significa:
 
-- IP o AMS Net ID del PLC sono sbagliati
-- manca la route AMS sul PLC o sul target
-- firewall o rete bloccano la comunicazione
+- IP del PLC sbagliato
+- AMS Net ID del PLC sbagliato
+- AMS Net ID locale sbagliato
+- route AMS mancante
+- firewall o rete che bloccano la comunicazione
 
-### Il codice funziona su Linux ma non su Windows
+### Funziona su Linux ma non su Windows
 
 Controlla soprattutto:
 
-- AMS Net ID locale impostato
-- route verso il target
-- route di ritorno dal target verso il PC
+- AMS Net ID locale impostato sul PC
+- route dal PC verso il PLC
+- route dal PLC verso il PC
 
-## Cosa e stato testato
+## Come capire se e installato bene
 
-Testati in questo repository:
+Questa prova deve funzionare:
 
-- bootstrap Python del package
-- patch delle funzioni `pyads` che su Windows erano bloccate
-- metadata packaging Python
-
-Limite importante:
-
-- non ho potuto compilare e provare davvero la DLL Windows in questo ambiente
-  Linux
-
-Quindi: la parte Python e stata testata qui, ma la validazione finale della DLL
-e del wheel Windows va fatta su Windows.
-
-## Cosa devi fare adesso
-
-Se vuoi usare il progetto davvero, i prossimi passi sono questi:
-
-1. eseguire la build o la CI su una macchina Windows
-2. verificare che venga prodotto il wheel `win_amd64`
-3. installare quel wheel in una venv Windows pulita
-4. fare una prova reale contro un PLC o contro il testserver
-5. pubblicare il wheel su PyPI o sul tuo indice interno
-
-## Per chi deve costruire il wheel
-
-### Caso consigliato gratis: AppVeyor
-
-Il repository ora include anche [appveyor.yml](appveyor.yml).
-
-Per un repository pubblico, AppVeyor e una scelta semplice per compilare la
-DLL su Windows senza usare GitHub Actions del tuo account.
-
-Passi:
-
-1. entra su AppVeyor con il tuo account GitHub
-2. aggiungi questo repository
-3. lancia la build
-4. scarica l artifact `pyads-standalone-wheel`
-
-La build AppVeyor fa tutto questo da sola:
-
-- aggiorna i submodule
-- esegue i test Python
-- costruisce il wheel Windows
-- installa quel wheel in una venv pulita
-- esegue uno smoke test del runtime
-
-Se la build passa, nell artifact trovi il file `.whl` pronto da usare.
-
-### Caso locale: vuoi compilare tu il wheel su Windows
-
-Serve solo questo:
-
-- Python
-- un compilatore C++ per Windows
-
-Nel caso piu semplice:
-
-- Visual Studio 2022 Build Tools o Visual Studio con workload C++
-
-Gli altri tool Python vengono scaricati automaticamente dagli script.
-
-Comando piu semplice per build + test + smoke test:
-
-```bash
-python scripts/validate_windows.py
+```python
+import pyads
+print(pyads.__version__)
 ```
 
-Questo script:
+Se l import funziona, il pacchetto e installato.
 
-- crea una venv locale `.build-venv`
-- installa `pytest` e `build`
-- esegue i test Python
-- costruisce il wheel Windows
-- crea una seconda venv pulita `.smoke-venv`
-- installa il wheel appena creato
-- esegue uno smoke test del runtime ADS
+Se poi anche la connessione ADS funziona, allora il wheel bundleato sta
+lavorando correttamente.
 
-Se vuoi solo costruire il wheel, senza il resto:
+## Dove prendere il wheel
 
-```bash
-python scripts/build_wheel.py
+Se non usi PyPI, puoi distribuire direttamente il file `.whl` Windows gia
+compilato.
+
+Questo e il formato corretto:
+
+```text
+pyads_standalone-0.1.0-py3-none-win_amd64.whl
 ```
 
-Questo secondo script:
+## Per chi mantiene il progetto
 
-- crea una venv locale `.build-venv`
-- installa `build`
-- lascia che il sistema di build scarichi da solo `setuptools`, `wheel`,
-  `meson` e `ninja`
-- compila i sorgenti Beckhoff ADS presenti in `vendor/ADS`
-- crea il wheel con dentro `TcAdsDll.dll`
+Per creare il wheel Windows:
 
-Quindi:
+- usa AppVeyor oppure una macchina Windows
+- il comando locale completo e `python scripts/validate_windows.py`
 
-- `meson` e `ninja` non devi installarli tu a mano
-- il compilatore C++ invece non puo essere evitato se vuoi compilare la DLL
+Questo comando:
 
-### Se vuoi zero dipendenze locali davvero
-
-Allora non devi compilare in locale.
-
-Devi:
-
-1. usare una CI Windows per produrre il wheel
-2. distribuire solo wheel gia compilati
-3. far installare agli utenti solo quel wheel
-
-In questo repository, oggi il percorso gratis consigliato e AppVeyor.
-
-### E GitHub Actions?
-
-I workflow GitHub sono ancora nel repository come opzione secondaria.
-
-Pero, nel tuo account, GitHub Actions era bloccato da un errore di billing
-prima ancora dell avvio dei job. Per questo il percorso consigliato adesso e
-AppVeyor.
+- esegue i test Python
+- compila `TcAdsDll.dll`
+- crea il wheel
+- installa il wheel in una venv pulita
+- esegue uno smoke test finale
 
 ## Licenze
 
