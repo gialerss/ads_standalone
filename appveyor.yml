@@ -1,0 +1,20 @@
+version: "{build}"
+
+skip_branch_with_pr: true
+max_jobs: 1
+
+image: Visual Studio 2022
+
+build: off
+test: off
+
+install:
+  - cmd: py -3.12-64 --version
+  - cmd: git submodule update --init --recursive
+
+build_script:
+  - cmd: py -3.12-64 scripts\validate_windows.py
+
+artifacts:
+  - path: dist\*.whl
+    name: pyads-standalone-wheel

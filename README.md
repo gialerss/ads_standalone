@@ -207,11 +207,9 @@ Limite importante:
 
 - non ho potuto compilare e provare davvero la DLL Windows in questo ambiente
   Linux
-- la validazione reale della build Windows e demandata alla CI Windows in
-  `.github/workflows/ci.yml`
 
-Quindi: la parte Python e stata testata, la parte finale Windows va ancora
-confermata con una build su Windows.
+Quindi: la parte Python e stata testata qui, ma la validazione finale della DLL
+e del wheel Windows va fatta su Windows.
 
 ## Cosa devi fare adesso
 
@@ -225,16 +223,29 @@ Se vuoi usare il progetto davvero, i prossimi passi sono questi:
 
 ## Per chi deve costruire il wheel
 
-### Caso consigliato: non compilare in locale
+### Caso consigliato gratis: AppVeyor
 
-Il modo migliore e questo:
+Il repository ora include anche [appveyor.yml](appveyor.yml).
 
-1. fai push del repository
-2. lanci la GitHub Actions su Windows
-3. scarichi il wheel prodotto
-4. pubblichi quel wheel
+Per un repository pubblico, AppVeyor e una scelta semplice per compilare la
+DLL su Windows senza usare GitHub Actions del tuo account.
 
-In questo caso sul PC dell utente finale non serve nulla oltre a Python.
+Passi:
+
+1. entra su AppVeyor con il tuo account GitHub
+2. aggiungi questo repository
+3. lancia la build
+4. scarica l artifact `pyads-standalone-wheel`
+
+La build AppVeyor fa tutto questo da sola:
+
+- aggiorna i submodule
+- esegue i test Python
+- costruisce il wheel Windows
+- installa quel wheel in una venv pulita
+- esegue uno smoke test del runtime
+
+Se la build passa, nell artifact trovi il file `.whl` pronto da usare.
 
 ### Caso locale: vuoi compilare tu il wheel su Windows
 
@@ -247,15 +258,31 @@ Nel caso piu semplice:
 
 - Visual Studio 2022 Build Tools o Visual Studio con workload C++
 
-Gli altri tool Python vengono scaricati automaticamente dal build.
+Gli altri tool Python vengono scaricati automaticamente dagli script.
 
-Comando piu semplice:
+Comando piu semplice per build + test + smoke test:
+
+```bash
+python scripts/validate_windows.py
+```
+
+Questo script:
+
+- crea una venv locale `.build-venv`
+- installa `pytest` e `build`
+- esegue i test Python
+- costruisce il wheel Windows
+- crea una seconda venv pulita `.smoke-venv`
+- installa il wheel appena creato
+- esegue uno smoke test del runtime ADS
+
+Se vuoi solo costruire il wheel, senza il resto:
 
 ```bash
 python scripts/build_wheel.py
 ```
 
-Questo script:
+Questo secondo script:
 
 - crea una venv locale `.build-venv`
 - installa `build`
@@ -275,9 +302,19 @@ Allora non devi compilare in locale.
 
 Devi:
 
-1. usare la CI Windows per produrre il wheel
+1. usare una CI Windows per produrre il wheel
 2. distribuire solo wheel gia compilati
 3. far installare agli utenti solo quel wheel
+
+In questo repository, oggi il percorso gratis consigliato e AppVeyor.
+
+### E GitHub Actions?
+
+I workflow GitHub sono ancora nel repository come opzione secondaria.
+
+Pero, nel tuo account, GitHub Actions era bloccato da un errore di billing
+prima ancora dell avvio dei job. Per questo il percorso consigliato adesso e
+AppVeyor.
 
 ## Licenze
 
