@@ -47,16 +47,21 @@ Quindi restano comunque necessari:
 
 ## Installazione
 
-Se il pacchetto e pubblicato su PyPI:
+Il pacchetto al momento non e pubblicato su PyPI.
+
+Quindi per usarlo adesso devi installare il wheel Windows gia compilato.
+
+### Installazione diretta dal link del wheel
 
 ```bash
-pip install pyads-standalone
+py -m pip install "https://ci.appveyor.com/api/buildjobs/uj5ftko1wmmugoow/artifacts/dist/pyads_standalone-0.1.0-py3-none-win_amd64.whl"
 ```
 
-Se hai un wheel gia pronto:
+### Oppure: prima scarichi il wheel e poi lo installi
 
 ```bash
-pip install pyads_standalone-0.1.0-py3-none-win_amd64.whl
+curl -L -o pyads_standalone-0.1.0-py3-none-win_amd64.whl "https://ci.appveyor.com/api/buildjobs/uj5ftko1wmmugoow/artifacts/dist/pyads_standalone-0.1.0-py3-none-win_amd64.whl"
+py -m pip install .\pyads_standalone-0.1.0-py3-none-win_amd64.whl
 ```
 
 Dopo l installazione non devi fare altro.
@@ -239,8 +244,19 @@ lavorando correttamente.
 
 ## Dove prendere il wheel
 
-Se non usi PyPI, puoi distribuire direttamente il file `.whl` Windows gia
-compilato.
+Questo e il link diretto del wheel funzionante al momento:
+
+```text
+https://ci.appveyor.com/api/buildjobs/uj5ftko1wmmugoow/artifacts/dist/pyads_standalone-0.1.0-py3-none-win_amd64.whl
+```
+
+Se quel link cambia, apri la cronologia delle build qui:
+
+```text
+https://ci.appveyor.com/project/gialerss/ads-standalone/history
+```
+
+Poi scarica l artifact `pyads-standalone-wheel` dell ultima build verde.
 
 Questo e il formato corretto:
 
