@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+
+      - name: Run unit tests
+        env:
+          PYADS_STANDALONE_SKIP_NATIVE: "1"
+        run: pytest
+
+  windows-wheel:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+
+      - name: Build wheel
+        run: python -m build --wheel
+
+      - name: Smoke test bundled runtime
+        shell: pwsh
+        run: |
+          $wheel = Get-ChildItem dist\*.whl | Select-Object -First 1
+          python -m venv .venv
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\python -m pip install $wheel.FullName
+          @'
+          import pyads
+          from pyads import Connection
+          from pyads.testserver import AdsTestServer
+          import time
+
+          server = AdsTestServer(logging=False)
+          server.start()
+          try:
+              time.sleep(1)
+              pyads.open_port()
+              pyads.set_local_address("127.0.0.1.1.1")
+              pyads.add_route("127.0.0.1.1.1", "127.0.0.1")
+              plc = Connection("127.0.0.1.1.1", pyads.PORT_TC3PLC1, "127.0.0.1")
+              plc.open()
+              plc.close()
+              pyads.close_port()
+          finally:
+              server.close()
+              server.join(timeout=5)
+          '@ | .\.venv\Scripts\python -
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyads-standalone-wheel
+          path: dist/*.whl
