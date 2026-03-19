@@ -49,6 +49,8 @@ deps = [
 ]
 
 rename_args = [
+  '-DNOMINMAX',
+  '-DWIN32_LEAN_AND_MEAN',
   '-DAdsPortCloseEx=StandaloneAdsPortCloseEx',
   '-DAdsPortOpenEx=StandaloneAdsPortOpenEx',
   '-DAdsGetLocalAddressEx=StandaloneAdsGetLocalAddressEx',
