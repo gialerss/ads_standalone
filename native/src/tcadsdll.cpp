@@ -24,6 +24,9 @@
 #undef AdsSyncWriteControlReqEx
 #undef AdsSyncAddDeviceNotificationReqEx
 #undef AdsSyncDelDeviceNotificationReqEx
+#undef AdsAddRoute
+#undef AdsDelRoute
+#undef AdsSetLocalAddress
 
 #if defined(_WIN32)
 #define TCADS_EXPORT extern "C" __declspec(dllexport)
