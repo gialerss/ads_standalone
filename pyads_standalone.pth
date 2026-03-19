@@ -1,2 +1,1 @@
-import pyads_standalone.bootstrap
-
+import importlib, importlib.util; spec = importlib.util.find_spec("pyads_standalone"); spec and importlib.import_module("pyads_standalone.bootstrap")
