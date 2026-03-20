@@ -6,6 +6,7 @@ TwinCAT.
 In pratica:
 
 - installi questo pacchetto
+- `pip` installa anche `pyads` nello stesso ambiente Python
 - continui a scrivere `import pyads`
 - su Windows viene usata una `TcAdsDll.dll` inclusa nel wheel
 
@@ -64,7 +65,14 @@ curl -L -o pyads_standalone-0.1.0-py3-none-win_amd64.whl "https://ci.appveyor.co
 py -m pip install .\pyads_standalone-0.1.0-py3-none-win_amd64.whl
 ```
 
-Dopo l installazione non devi fare altro.
+`pyads-standalone` non sostituisce il modulo `pyads`: lo installa come
+dipendenza nello stesso ambiente Python.
+
+Se installi il wheel offline oppure usi `pip install --no-deps`, devi
+installare anche `pyads` nello stesso ambiente, altrimenti `import pyads`
+fallisce con `ModuleNotFoundError`.
+
+Nella maggior parte dei casi dopo l installazione non devi fare altro.
 
 ## Come si usa
 
@@ -73,6 +81,24 @@ Il codice Python resta quello normale di `pyads`.
 Import:
 
 ```python
+import pyads
+```
+
+## Se il tuo ambiente non esegue i file `.pth`
+
+Il comportamento automatico di `pyads-standalone` parte tramite un file `.pth`.
+
+Su un Python normale installato con `pip` non devi fare nulla.
+
+Se invece usi un ambiente particolare e `import pyads` continua a non vedere
+la DLL bundleata, attiva il bootstrap in modo esplicito prima di importare
+`pyads`:
+
+```python
+import pyads_standalone
+
+pyads_standalone.enable()
+
 import pyads
 ```
 
@@ -202,6 +228,16 @@ lascia il comportamento standard di TwinCAT.
 
 ## Errori comuni
 
+### `ModuleNotFoundError: No module named 'pyads'`
+
+Significa che il pacchetto `pyads` non e presente nello stesso ambiente Python.
+
+Controlla che:
+
+- stai usando lo stesso interprete in cui hai installato `pyads-standalone`
+- non hai installato il wheel con `--no-deps`
+- se l installazione e offline, hai installato anche `pyads`
+
 ### `TcAdsDll.dll` non trovata
 
 Controlla che:
@@ -209,6 +245,7 @@ Controlla che:
 - stai usando lo stesso ambiente Python in cui hai installato il pacchetto
 - stai usando Windows 64 bit
 - il wheel e stato installato correttamente
+- se il tuo ambiente non esegue i `.pth`, hai chiamato `pyads_standalone.enable()` prima di `import pyads`
 
 ### Timeout o errore ADS
 
