@@ -55,13 +55,13 @@ Quindi per usarlo adesso devi installare il wheel Windows gia compilato.
 ### Installazione diretta dal link del wheel
 
 ```bash
-py -m pip install "https://ci.appveyor.com/api/buildjobs/uj5ftko1wmmugoow/artifacts/dist/pyads_standalone-0.1.0-py3-none-win_amd64.whl"
+py -m pip install "https://ci.appveyor.com/api/projects/gialerss/ads-standalone/artifacts/dist/pyads_standalone-0.1.0-py3-none-win_amd64.whl"
 ```
 
 ### Oppure: prima scarichi il wheel e poi lo installi
 
 ```bash
-curl -L -o pyads_standalone-0.1.0-py3-none-win_amd64.whl "https://ci.appveyor.com/api/buildjobs/uj5ftko1wmmugoow/artifacts/dist/pyads_standalone-0.1.0-py3-none-win_amd64.whl"
+curl -L -o pyads_standalone-0.1.0-py3-none-win_amd64.whl "https://ci.appveyor.com/api/projects/gialerss/ads-standalone/artifacts/dist/pyads_standalone-0.1.0-py3-none-win_amd64.whl"
 py -m pip install .\pyads_standalone-0.1.0-py3-none-win_amd64.whl
 ```
 
@@ -281,10 +281,13 @@ lavorando correttamente.
 
 ## Dove prendere il wheel
 
-Questo e il link diretto del wheel funzionante al momento:
+Questo e il link diretto del wheel funzionante al momento.
+
+Questo URL punta all ultima build riuscita di AppVeyor, quindi non serve
+aggiornare il `jobId` a ogni nuova build.
 
 ```text
-https://ci.appveyor.com/api/buildjobs/uj5ftko1wmmugoow/artifacts/dist/pyads_standalone-0.1.0-py3-none-win_amd64.whl
+https://ci.appveyor.com/api/projects/gialerss/ads-standalone/artifacts/dist/pyads_standalone-0.1.0-py3-none-win_amd64.whl
 ```
 
 Se quel link cambia, apri la cronologia delle build qui:
